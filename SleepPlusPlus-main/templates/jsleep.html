@@ -1,0 +1,529 @@
+
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../static/style.css">
+  <title>Sleep++</title>
+
+ <script src="../static/NoSleep.js"></script>
+<script>
+var arousal=false;
+var arousalMax = 3;
+var keyword = '{{ data }}';
+var tmVolume = 0.016;
+var calVolume=0.00025;
+var calTimer='';
+var totalRuns=0;
+var wakelock = new NoSleep();
+var pid="testuser"
+var motionSample="";
+var xacc=0;
+var yacc=0;
+var zacc=0;
+var changeDetected=false;
+var oldx=0;
+var oldy=0
+var oldz=0;
+var motionSum=0;
+var motionHistory=[];
+var totalHistory=[];
+var summedMotion=[];
+var timestamps=[];
+var running=[];
+var startStop=[];
+var soundVolume=[];
+var SIGMOTION=0.1;
+var BUFFERSIZE=800;
+var DEBUG_MODE=true;
+var STARTTIME=3600;
+var STOPTIME=12600;
+var AROUSAL_OFFSET=0;
+var ONTHRESH=0.4;
+var TRAINSIZE=4;
+var AROUSAL_THRESH=0.99;
+var rstim=-1;
+var session=0;
+var condition=-1;
+var totalStim=0;
+var appVersion=5;
+motionAuthorized=false;
+motionFunctional=false;
+
+STARTTIME=0;
+var soundRunning=false;
+var soundhandle="";
+
+var epochs=0;
+
+var beat='';
+var samplehandle="";
+
+if (DEBUG_MODE) {
+	BUFFERSIZE=10;
+	STARTTIME=10;
+	ONTHRESH=0.8;
+	}
+	
+var elem = document.documentElement;
+
+/* View in fullscreen */
+function openFullscreen() {
+try {
+  if (elem.requestFullscreen) {
+    elem.requestFullscreen();
+  } else if (elem.webkitRequestFullscreen) { /* Safari */
+    elem.webkitRequestFullscreen();
+  } else if (elem.msRequestFullscreen) { /* IE11 */
+    elem.msRequestFullscreen();
+  }
+  }
+  catch (e) {
+  
+  }
+}
+
+/* Close fullscreen */
+function closeFullscreen() {
+try {
+  if (document.exitFullscreen) {
+    document.exitFullscreen();
+  } else if (document.webkitExitFullscreen) { /* Safari */
+    document.webkitExitFullscreen();
+  } else if (document.msExitFullscreen) { /* IE11 */
+    document.msExitFullscreen();
+  }
+  }
+  catch (e) {
+  
+  }
+}
+
+function antiburn() { ///move the text around to prevent screen burnin
+
+document.getElementById("antiburnin").style.height = Math.random() * 15+"%";
+
+}
+
+function playText(text, vol) {
+	let utterance = new SpeechSynthesisUtterance(text);
+	utterance.volume = vol;
+	try {
+		speechSynthesis.speak(utterance);
+	}
+	catch(error) {
+	}
+}
+
+function playwa() {
+        var source = context.createBufferSource();
+        source.buffer = clickBuffer;
+		source.connect(gainNode);
+        gainNode.connect(context.destination);
+        source.start();
+      }
+
+	  var URL = '../static/pinknoiseburst.wav';
+      var AudioContext = window.AudioContext || window.webkitAudioContext;
+      var context = new AudioContext(); // Make it crossbrowser
+      var gainNode = context.createGain();
+      gainNode.gain.value = 1; // set volume to 100%
+      var clickBuffer = void 0;
+
+      // The Promise-based syntax for BaseAudioContext.decodeAudioData() is not supported in Safari(Webkit).
+      window.fetch(URL)
+        .then(response => response.arrayBuffer())
+        .then(arrayBuffer => context.decodeAudioData(arrayBuffer,
+           audioBuffer => {
+              clickBuffer = audioBuffer;
+            },
+            error =>
+              console.error(error)
+          ))
+
+      function unlock() {
+        console.log("unlocking")
+        // create empty buffer and play it
+        var buffer = context.createBuffer(1, 1, 22050);
+        var source = context.createBufferSource();
+        source.buffer = buffer;
+        source.connect(context.destination);
+
+        // play the file. noteOn is the older version of start()
+        source.start ? source.start(0) : source.noteOn(0);
+
+        
+      }
+	  
+	  
+function setConditions() { //set up the ondition alternation and session counter
+var cc=getCookie("condition");
+
+if (cc == '' || cc == null) { //the condition cookie doesn't exist, meaning this is the first time we have visited the page
+if (Math.random() > 0.5) {
+	condition=1;
+	}
+	else {
+	condition=0;
+	}
+	setCookie("condition",condition,365*2);
+	setCookie("session",0,365*2);
+	session=0;
+	localStorage.setItem('lastlaunch', Date.now());
+}
+else {
+
+	if (Date.now() > parseInt(localStorage.getItem("lastlaunch"))+(43200*1000) || (DEBUG_MODE && Date.now() > parseInt(localStorage.getItem("lastlaunch"))+(30000))) {
+
+	condition=parseInt(cc)+1;
+	if (condition > 1) {
+	condition=0;
+	}
+	session=parseInt(getCookie("session"))+1;
+	setCookie("condition",condition,365*2);
+	setCookie("session",session,365*2);
+	localStorage.setItem('lastlaunch', Date.now());
+	}
+	else {
+	session=parseInt(getCookie("session"));
+	condition=parseInt(cc);
+	}
+
+}
+
+}
+
+setConditions();
+setCookie("totalStim",0);
+setCookie("appVersion",appVersion);
+function startcal() {
+try { //error handling
+//acquire a wake lock to keep the screen on
+	wakelock.enable();
+unlock(); //unlock the audio context
+}
+catch (error) {
+alert("Your browser doesn't support some features used by this app, and it may not work properly. We recommend updating your browser or using a new version of Google Chrome");
+}
+/*
+beat = new Audio('/static/pinknoiseburst.wav');
+
+beat.volume=calVolume;*/
+gainNode.gain.value = calVolume;
+document.getElementById("startcalibration").disabled = true; 
+document.getElementById("soundReport").style.visibility = "visible";
+document.getElementById("soundReport").style.display = "initial";
+document.getElementById("intro").style.display = "none";
+calTimer = setInterval(function () {
+
+if (totalRuns >= 1) { //the frist 10 second sare a trap to catch anyone who presses the button too soon
+//alert(calVolume);
+playText("test", calVolume);
+calVolume=calVolume*2;
+if (calVolume > 1) {
+alert("Could not calibrate the sound. Try turning up your device's volume, and make sure it is not muted.");
+clearInterval(calTimer);
+location.reload(); 
+}
+
+}
+totalRuns++;
+
+}, 8000);
+
+}
+
+function setCookie(cname, cvalue, exdays) {
+  let d = new Date();
+  d.setTime(d.getTime() + (exdays*24*60*60*1000));
+  let expires = "expires="+ d.toUTCString();
+  document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+}
+
+function getCookie(cname) {
+  let name = cname + "=";
+  let decodedCookie = decodeURIComponent(document.cookie);
+  let ca = decodedCookie.split(';');
+  for(let i = 0; i <ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) == ' ') {
+      c = c.substring(1);
+    }
+    if (c.indexOf(name) == 0) {
+      return c.substring(name.length, c.length);
+    }
+  }
+  return "";
+}
+pid=getCookie("pid");
+
+
+function reportSound() {
+if (totalRuns < 1) {
+alert("Wait until you hear the phone make a sound to press the button");
+}
+else {
+
+clearTimeout(calTimer);
+document.getElementById("testMotion").style.visibility = "visible";
+document.getElementById("soundcal").style.display = "none";
+
+}
+}
+
+function testMotion() {
+    if (window.DeviceMotionEvent == null) {
+        alert("Unfortunately, your device or browser doesn't support motion data. It may help to try with a different browser");
+    } else if (DeviceMotionEvent.requestPermission) {
+        DeviceMotionEvent.requestPermission().then(function(state) {
+            if (state == "granted") {
+                motionAuthorized=true;
+				startRecordingMotion();
+            } else {
+			alert("Motion detection permission is required to proceed");
+			}
+        }, function(err) {
+            1+1
+        });
+    } else { // no need for permission
+        motionAuthorized=true;
+		startRecordingMotion();
+    }
+	
+}
+
+function startRecordingMotion() {
+	
+	//
+	//setInterval(simulateMotion,500); //for simulating motion on desktop
+	samplehandle=setInterval(tm,1000); //loop that measures the accelerometer every second
+	window.addEventListener("devicemotion", function(e) {
+	xacc=e.accelerationIncludingGravity.x;
+	yacc=e.accelerationIncludingGravity.y;
+	zacc=e.accelerationIncludingGravity.z;
+	
+	});
+	
+	}
+	
+	
+function tm() {
+
+epochs++;
+
+	setCookie("wakeupTime",Date.now(),365*2); //keep updating the wakeup time
+	var diff=Math.abs(xacc-oldx)+Math.abs(yacc-oldy)+Math.abs(zacc-oldz);
+	if (diff > 0 || (DEBUG_MODE && true)) {
+		changeDetected=true;
+		document.getElementById("startsleep").style.visibility = "visible";
+		document.getElementById("testMotion").style.display = "none";
+		setInterval(antiburn,600000); //start the burnin protection
+		openFullscreen();
+		}
+	if (epochs == 10 && !changeDetected) {
+		alert("Your device doesn't seem to be sending motion data. You may need to give permission for this site to use the motion sensors, or try a different browser/device");
+		}
+	oldx=xacc;
+	oldy=yacc;
+	oldz=zacc;
+	
+	//now write the motion to the motion array
+	
+	motionperc=getPerc(diff, motionHistory);
+	//handle arousal detectionn
+	
+	if (arousal || (motionperc >= AROUSAL_THRESH && !DEBUG_MODE)) {
+	//alert("arousal!");
+	if (soundRunning) {
+	stopSound();
+	arousalMax-=1
+	AROUSAL_OFFSET=epochs+300;
+	tmVolume=0.016;
+	}
+
+	if (arousal) { //debug purposes
+		arousal = false;
+	}
+	}
+
+	//measure whether any significant motion occurred
+	if (Math.abs(diff) >= SIGMOTION) {
+		totalHistory.push(1);
+	}
+	else {
+		totalHistory.push(0);
+	}
+	if (totalHistory.length > BUFFERSIZE) {
+	totalHistory.shift();
+	}
+	
+	//alert("started2");
+	motionSum=sumArray(totalHistory);
+	if (epochs % 5 == 0) {
+	motionHistory.push(diff);
+	summedMotion.push(motionSum);
+	timestamps.push(Date.now());
+	soundVolume.push(calVolume);
+	running.push(soundRunning);
+	if (soundRunning) {
+		totalStim=totalStim+1;
+		setCookie("totalStim",totalStim);
+		}
+
+	}
+
+	if (epochs % 3600 == 0) { // mark the person as having gone to sleep (when they go back to the site it should be in wake mode)
+	setCookie("stage","wake",365*2);
+	
+	
+	}
+	
+	//
+	if (arousalMax > 0 & (DEBUG_MODE || (getPerc(motionSum,summedMotion) <= ONTHRESH && epochs >= STARTTIME && epochs <= STOPTIME && epochs > AROUSAL_OFFSET)))  {
+	//alert("starting sound");
+	rstim=TRAINSIZE;
+	startSound();
+	
+	}
+	else {
+	//rstim=rstim-1;
+	//if (rstim < 0) {
+	//stopSound();
+	//alert("stopping sound");
+	//}
+	}
+	//alert(diff+","+totalHistory);
+	//alert(diff+","+motionSum+","+getPerc(motionSum,summedMotion));
+	
+}
+	
+function simulateMotion() { //simulate motion signals for desktop tes
+alert("Simulating");
+xacc=Math.random();
+yacc=Math.random();
+zacc=Math.random();
+}
+function transmitData() {
+let formData = new FormData();
+
+formData.append("pid", pid);
+formData.append("motionHistory",motionHistory);
+formData.append("summedMotion",summedMotion);
+formData.append("timestamps",timestamps);
+formData.append("running",running);
+formData.append("session",session);
+formData.append("soundVolume",soundVolume);
+formData.append("activeMode",condition);
+formData.append("appVersion",appVersion);
+let request = new XMLHttpRequest();
+request.open("POST", "/sleepdata",true);
+request.send(formData);
+}
+
+function wake() { //user is awake, redirect them to the wake page
+closeFullscreen();
+setCookie("stage","wake",365*2);
+document.getElementById("waitdt").style.visibility = "visible";
+
+
+setTimeout(function() {
+let formData = new FormData();
+formData.append("pid", pid);
+formData.append("motionHistory",motionHistory);
+formData.append("summedMotion",summedMotion);
+formData.append("timestamps",timestamps);
+formData.append("running",running);
+formData.append("session",session);
+formData.append("soundVolume",soundVolume);
+formData.append("activeMode",condition);
+formData.append("appVersion",appVersion);
+let request = new XMLHttpRequest();
+request.open("POST", "/sleepdata",false);
+request.send(formData);
+if (request.status == 200) {
+
+window.location.replace("/wake");
+}
+else {
+document.getElementById("waitdt").style.visibility = "hidden";
+alert("Unable to connect to the server; make sure you have a network connection!");
+}
+},500);
+} //give a delay for the loading spiral to show up before we actually try to send data
+
+function getPerc(sample, buffer) {
+var subtotal=0.0;
+for (var i=0; i< buffer.length; i++) {
+if (buffer[i] <= sample) {
+subtotal=subtotal+1;
+}
+}
+//alert("samp:"+sample+",length:"+buffer+",avg"+subtotal/buffer.length)
+return subtotal/buffer.length;
+} 
+
+function sumArray(arr) {
+let sum = 0;
+
+for (let index = 0; index < arr.length; index++) {
+  sum += arr[index];
+
+}
+return sum;
+}
+
+function startSound() {
+if (!soundRunning) {
+	soundRunning=true;
+	startStop.push(Date.now());
+	if (condition < 1) {
+	soundhandle=setInterval(function () {
+		playText(keyword, tmVolume);
+		tmVolume = tmVolume * 2
+	}, 1200)
+	}
+}
+}
+
+
+function stopSound() {
+	startStop.push(Date.now());
+	soundRunning=false;
+	if (condition < 1) {
+	clearTimeout(soundhandle);
+	}
+}
+
+function simulateArousal() {
+	arousal = true;
+}
+
+setCookie("stage","sleep",365*2);
+setInterval(transmitData,600000);
+
+
+      
+</script>
+</head>
+<body style="font-size: 25px;
+		background-color: black;
+        color: white;">
+<div id="antiburnin"></div>
+<div id="soundcal"><div id="intro">
+Now we're ready to start the sleep mode. You should start this when you are ready to go to bed--if you're not yet you can come back by later visiting sleepplus.appspot.com <br><br> The first step is to calibrate the sound volume. Place the device on your mattress, in the same place it will be while you sleep. Lie down in your bed and then tap the "Calibrate sound" button.<br>
+<button id="startcalibration" onclick="startcal()">Calibrate sound</button></div>
+<div id="soundReport" style="visibility:hidden"><br>Tap the button below as soon as you hear the device make a sound. Make sure the device is unmuted. It may take a minute before the sound is played.<br>
+<button id="report" onclick="reportSound()" style="height:10%;width:75%">I heard a sound</button><br><br>
+<button id="restart" onclick="location.reload();" style="height:10%;width:75%">Restart calibration</button></div></div>
+
+<div id="testMotion" style="visibility:hidden"><br>Now we need to activate your device's motion sensor. To start, click the button below. You might be prompted to allow access to the sensor.<br>
+<button id="motion" onclick="testMotion()" style="height:10%;width:75%">Activate motion sensor</button></div>
+<br>
+<div id="startsleep" style="visibility:hidden">All set! We're ready for you to go to sleep. Place the phone on the bed with the screen on (you can place it facedown). We also recommend keeping the phone connected to the charger.<br> When you wake up in the morning, tap the button below.
+<br><button id="wakebutton" onclick="wake()" style="height:10%;width:75%">I'm awake<br>
+</button>
+</div>
+<div id="waitdt" style="visibility:hidden"><br> One minute...we're saving your sleep data.<br><img src="../static/spinner.gif" height="200" width="200"></div>
+
+</body>
+</html>
+

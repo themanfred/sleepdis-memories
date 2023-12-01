@@ -1,0 +1,56 @@
+
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../static/style.css">
+  <title>Sleep++</title>
+<script>
+function setCookie(cname, cvalue, exdays) {
+  const d = new Date();
+  d.setTime(d.getTime() + (exdays*24*60*60*1000));
+  let expires = "expires="+ d.toUTCString();
+  document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+}
+
+
+function validateID() {
+var pid=document.getElementById("pid").value;
+var validated=false;
+try { //make sure the pid contains the correct verification code
+if (pid.charAt(1) == '9') {
+if (pid.charAt(3) == '2') {
+if (pid.charAt(5) == '3') {
+if (pid.charAt(7) == '6') {
+validated=true;
+}
+}
+}
+}
+}
+catch (error) {
+
+
+}
+if (validated) {
+setCookie("pid",document.getElementById("pid").value,365*2);
+setCookie("stage","sleep",365*2);
+location.reload();
+}
+else {
+alert("Participant ID not found. Make sure you have entered the ID number exactly as you received it, with no extra spaces or non-numeric characters.");
+}
+}
+</script>
+</head>
+<body>
+  <h1>Welcome!</h1><br>
+  <h2>Please enter your participant ID below, then click continue</h2>
+<form>
+<input type="text" id="pid" style="height:10%;width:75%"></input>
+<br>
+<button onclick="validateID()" style="height:10%;width:75%">Continue</button>
+</form>
+
+</body>
+</html>
+

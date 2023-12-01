@@ -1,0 +1,64 @@
+
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../static/style.css">
+  <title>Sleep++</title>
+<script>
+var MINDELAY=43200000/2; //require a 6 hour delay
+function setCookie(cname, cvalue, exdays) {
+  const d = new Date();
+  d.setTime(d.getTime() + (exdays*24*60*60*1000));
+  let expires = "expires="+ d.toUTCString();
+  document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+}
+
+setCookie("stage","presession",365*2);
+
+function survey() {
+window.location.href="https://mit.co1.qualtrics.com/jfe/form/SV_cYdOmXkfwqR64bs?pid="+getCookie("pid")+"&session="+getCookie("session")+"&condition="+getCookie("condition")+"&totalStim="+getCookie("totalStim")+"&appVersion=5";
+}
+
+function getCookie(cname) {
+  let name = cname + "=";
+  let decodedCookie = decodeURIComponent(document.cookie);
+  let ca = decodedCookie.split(';');
+  for(let i = 0; i <ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) == ' ') {
+      c = c.substring(1);
+    }
+    if (c.indexOf(name) == 0) {
+      return c.substring(name.length, c.length);
+    }
+  }
+  return "";
+}
+
+function checkDelay() { //check if enough time has elapsed since the end of sleep to give the option to continue 
+var waketime=parseInt(getCookie("wakeupTime"));
+if (Date.now()-waketime > MINDELAY) {// it has
+document.getElementById("message2").style.visibility = "visible";
+document.getElementById("message1").style.display = "none";
+}
+}
+
+window.onload = function() {
+    setInterval(checkDelay,60000);
+checkDelay();
+};
+
+</script>
+</head>
+<body>
+<div id="message1">
+  <h1>Thanks!</h1><br>
+There's nothing else to do for now--come back to sleepplus.appspot.com tonight to start your next session.</div>
+
+<div id="message2" style="visibility:hidden">
+<h2>Welcome back!</h2><br>
+We have a few questions about how your day went, and then we'll set up the next sleep session. <a href="javascript:void(0)" onclick="survey()">Tap here to start</a>.</div>
+
+</body>
+</html>
+
