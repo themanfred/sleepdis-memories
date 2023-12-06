@@ -34,8 +34,6 @@ def wakecomplete():
 @app.route('/sleepdata',methods=['POST'])
 def sleepdata():
 
-    
-
     datasize=len(request.form['timestamps'])
     if (datasize > 4):
         entity = datastore.Entity(key=dc.key('sleepdata'),exclude_from_indexes=("motionHistory","summedMotion","timestamps","running","soundVolume"))

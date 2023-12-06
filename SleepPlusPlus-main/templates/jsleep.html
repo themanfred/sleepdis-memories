@@ -7,15 +7,34 @@
 
  <script src="../static/NoSleep.js"></script>
 <script>
+
+	// Print url variables
+	function getUrlVars() {
+		var vars = {};
+		var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi,
+			function(m, key, value) {
+				vars[key] = value;
+			});
+		return vars;
+	}
+	const urlParams = new URLSearchParams(window.location.search);
+
 var arousal=false;
 var arousalMax = 3;
-var keyword = '{{ data }}';
+const keyword = getUrlVars()["keyword"];
+//let speech = new SpeechSynthesisUtterance(keyword);
+//speech.lang = "en";
+//speech.volume = 1;
+//speechSynthesis.speak(speech);
+//alert(speechSynthesis.speaking);
+//alert(keyword);
 var tmVolume = 0.016;
 var calVolume=0.00025;
 var calTimer='';
-var totalRuns=0;
+var totalRuns=1;
 var wakelock = new NoSleep();
-var pid="testuser"
+var pid = getUrlVars()["pid"];
+alert("Keyword: "+keyword + " PID: "+pid);
 var motionSample="";
 var xacc=0;
 var yacc=0;
@@ -219,6 +238,7 @@ if (totalRuns >= 1) { //the frist 10 second sare a trap to catch anyone who pres
 //alert(calVolume);
 playText("test", calVolume);
 calVolume=calVolume*2;
+alert("Should have played a sound");
 if (calVolume > 1) {
 alert("Could not calibrate the sound. Try turning up your device's volume, and make sure it is not muted.");
 clearInterval(calTimer);
@@ -522,6 +542,7 @@ Now we're ready to start the sleep mode. You should start this when you are read
 <br><button id="wakebutton" onclick="wake()" style="height:10%;width:75%">I'm awake<br>
 </button>
 </div>
+<br>
 <div id="waitdt" style="visibility:hidden"><br> One minute...we're saving your sleep data.<br><img src="../static/spinner.gif" height="200" width="200"></div>
 
 </body>
