@@ -3,9 +3,9 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="../static/style.css">
-  <title>Sleep++</title>
+<title>Sleep++</title>
 
- <script src="../static/NoSleep.js"></script>
+<script src="../static/NoSleep.js"></script>
 <script>
 
 	// Print url variables
@@ -13,28 +13,42 @@
 		var vars = {};
 		var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi,
 			function(m, key, value) {
+				// Decode URI
+				key = decodeURIComponent(key);
+				value = decodeURIComponent(value);
 				vars[key] = value;
 			});
+		
 		return vars;
 	}
 	const urlParams = new URLSearchParams(window.location.search);
 
 var arousal=false;
 var arousalMax = 3;
-const keyword = getUrlVars()["keyword"];
-//let speech = new SpeechSynthesisUtterance(keyword);
-//speech.lang = "en";
-//speech.volume = 1;
-//speechSynthesis.speak(speech);
-//alert(speechSynthesis.speaking);
-//alert(keyword);
+//const keyword = getUrlVars()["keyword"] || getCookie("keyword");
+const neutralKeyword = getUrlVars()["neutralKeyword"] || getCookie("neutralKeyword");
+const negativeKeyword = getUrlVars()["negativeKeyword"] || getCookie("negativeKeyword");
+var keyword = getCookie("keyword") || "test";
+console.log("Keyword: " + keyword);
+// Print all url variables
+for (var key of urlParams.keys()) {
+	console.log(key, urlParams.get(key));
+}
 var tmVolume = 0.016;
-var calVolume=0.00025;
+var calVolume=1;
 var calTimer='';
 var totalRuns=1;
 var wakelock = new NoSleep();
 var pid = getUrlVars()["pid"];
-alert("Keyword: "+keyword + " PID: "+pid);
+// Validate pid
+/*
+const regex = /^\d9\d2\d3\d6$/;
+if (!regex.test(pid)) {
+	alert("Participant ID not found. Make sure you have entered the ID number exactly as you received it, with no extra spaces or non-numeric characters.\nEntered ID: " + pid);
+	// Delete pid cookie
+	document.cookie = "pid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+	window.location.replace("/"); // Redirect to index
+}*/
 var motionSample="";
 var xacc=0;
 var yacc=0;
@@ -55,7 +69,7 @@ var SIGMOTION=0.1;
 var BUFFERSIZE=800;
 var DEBUG_MODE=true;
 var STARTTIME=3600;
-var STOPTIME=12600;
+var STOPTIME=12600;// 3.5 hours
 var AROUSAL_OFFSET=0;
 var ONTHRESH=0.4;
 var TRAINSIZE=4;
@@ -77,6 +91,8 @@ var epochs=0;
 var beat='';
 var samplehandle="";
 
+const NumberOfSessions = 1;
+
 if (DEBUG_MODE) {
 	BUFFERSIZE=10;
 	STARTTIME=10;
@@ -88,17 +104,19 @@ var elem = document.documentElement;
 /* View in fullscreen */
 function openFullscreen() {
 try {
-  if (elem.requestFullscreen) {
-    elem.requestFullscreen();
-  } else if (elem.webkitRequestFullscreen) { /* Safari */
-    elem.webkitRequestFullscreen();
-  } else if (elem.msRequestFullscreen) { /* IE11 */
-    elem.msRequestFullscreen();
-  }
-  }
-  catch (e) {
-  
-  }
+	if (elem.requestFullscreen) {
+		elem.requestFullscreen();
+	} 
+	else if (elem.webkitRequestFullscreen) { /* Safari */
+		elem.webkitRequestFullscreen();
+	} 
+	else if (elem.msRequestFullscreen) { /* IE11 */
+		elem.msRequestFullscreen();
+	}
+	}
+	catch (e) {
+	
+	}
 }
 
 /* Close fullscreen */
@@ -117,7 +135,7 @@ try {
   }
 }
 
-function antiburn() { ///move the text around to prevent screen burnin
+function antiburn() { //move the text around to prevent screen burnin
 
 document.getElementById("antiburnin").style.height = Math.random() * 15+"%";
 
@@ -149,40 +167,51 @@ function playwa() {
       var clickBuffer = void 0;
 
       // The Promise-based syntax for BaseAudioContext.decodeAudioData() is not supported in Safari(Webkit).
-      window.fetch(URL)
-        .then(response => response.arrayBuffer())
-        .then(arrayBuffer => context.decodeAudioData(arrayBuffer,
-           audioBuffer => {
-              clickBuffer = audioBuffer;
-            },
-            error =>
-              console.error(error)
-          ))
+	window.fetch(URL)
+		.then(response => response.arrayBuffer())
+		.then(arrayBuffer => context.decodeAudioData(arrayBuffer,
+		audioBuffer => {
+			clickBuffer = audioBuffer;
+			},
+			error =>
+			console.error(error)
+		))
 
-      function unlock() {
-        console.log("unlocking")
-        // create empty buffer and play it
-        var buffer = context.createBuffer(1, 1, 22050);
-        var source = context.createBufferSource();
-        source.buffer = buffer;
-        source.connect(context.destination);
+	function unlock() {
+		console.log("unlocking")
+		// create empty buffer and play it
+		var buffer = context.createBuffer(1, 1, 22050);
+		var source = context.createBufferSource();
+		source.buffer = buffer;
+		source.connect(context.destination);
 
-        // play the file. noteOn is the older version of start()
-        source.start ? source.start(0) : source.noteOn(0);
+		// play the file. noteOn is the older version of start()
+		source.start ? source.start(0) : source.noteOn(0);
 
-        
-      }
-	  
-	  
+		
+	}
+
 function setConditions() { //set up the ondition alternation and session counter
 var cc=getCookie("condition");
 
-if (cc == '' || cc == null) { //the condition cookie doesn't exist, meaning this is the first time we have visited the page
-if (Math.random() > 0.5) {
-	condition=1;
+if (cc == '' || cc == null) { // The condition cookie doesn't exist, meaning this is the first time we have visited the page
+	let threshold = Math.random();
+	if (threshold > 2/3) {
+	condition=0; // Control (placebo)
+	keyword = "";
+	setCookie("keyword",keyword,365*2);
+	}
+	else if (threshold > 1/3) {
+	condition=1; // Neutral control memory
+	keyword = neutralKeyword;
+	setCookie("keyword",keyword,365*2);
+	setCookie("neutralKeyword",neutralKeyword,365*2);
 	}
 	else {
-	condition=0;
+	condition=2; // Negative control memory 
+	keyword = negativeKeyword;
+	setCookie("keyword",keyword,365*2);
+	setCookie("negativeKeyword",negativeKeyword,365*2);
 	}
 	setCookie("condition",condition,365*2);
 	setCookie("session",0,365*2);
@@ -190,21 +219,31 @@ if (Math.random() > 0.5) {
 	localStorage.setItem('lastlaunch', Date.now());
 }
 else {
+	// Wait 15 hours
+	// 60 seconds * 60 minutes * 15 hours = 54000 seconds
+	if (Date.now() > parseInt(localStorage.getItem("lastlaunch"))+(54000*1000) || (DEBUG_MODE && Date.now() > parseInt(localStorage.getItem("lastlaunch"))+(30*1000))) {
 
-	if (Date.now() > parseInt(localStorage.getItem("lastlaunch"))+(43200*1000) || (DEBUG_MODE && Date.now() > parseInt(localStorage.getItem("lastlaunch"))+(30000))) {
-
+	/*
 	condition=parseInt(cc)+1;
 	if (condition > 1) {
 	condition=0;
-	}
+	}*/
+	//condition = !condition;
+	//condition=parseInt(cc);
+	//setCookie("condition",condition,365*2);
+
+	condition=parseInt(cc);
+
 	session=parseInt(getCookie("session"))+1;
-	setCookie("condition",condition,365*2);
 	setCookie("session",session,365*2);
 	localStorage.setItem('lastlaunch', Date.now());
+	// Set a new cookie/variable to keep track if we are in a new day and therefore we can proceed with the next session
+	setCookie("newDay", 1, 365*2);
 	}
 	else {
-	session=parseInt(getCookie("session"));
-	condition=parseInt(cc);
+	//session=parseInt(getCookie("session"));
+	//condition=parseInt(cc);
+	// do nothing
 	}
 
 }
@@ -260,19 +299,21 @@ function setCookie(cname, cvalue, exdays) {
 }
 
 function getCookie(cname) {
-  let name = cname + "=";
-  let decodedCookie = decodeURIComponent(document.cookie);
-  let ca = decodedCookie.split(';');
-  for(let i = 0; i <ca.length; i++) {
-    let c = ca[i];
-    while (c.charAt(0) == ' ') {
-      c = c.substring(1);
-    }
-    if (c.indexOf(name) == 0) {
-      return c.substring(name.length, c.length);
-    }
-  }
-  return "";
+	let name = cname + "=";
+	let decodedCookie = decodeURIComponent(document.cookie);
+	let ca = decodedCookie.split(';');
+	for(let i = 0; i <ca.length; i++) {
+		let c = ca[i];
+		while (c.charAt(0) == ' ') {
+			c = c.substring(1);
+		}
+		if (c.indexOf(name) == 0) {
+			//return c.substring(name.length, c.length);
+			// Decode cookie
+			return decodeURIComponent(c.substring(name.length, c.length));
+		}
+	}
+	return "";
 }
 pid=getCookie("pid");
 
@@ -323,16 +364,17 @@ function startRecordingMotion() {
 	
 	});
 	
-	}
-	
-	
-function tm() {
+}
 
-epochs++;
+function tm() { // TrackMotion
+	/*
+	Main function for tracking motion, calculating motion percentages, and managing sound playback based on motion.
+	*/
+	epochs++;
 
 	setCookie("wakeupTime",Date.now(),365*2); //keep updating the wakeup time
 	var diff=Math.abs(xacc-oldx)+Math.abs(yacc-oldy)+Math.abs(zacc-oldz);
-	if (diff > 0 || (DEBUG_MODE && true)) {
+	if (diff > 0 || DEBUG_MODE) {
 		changeDetected=true;
 		document.getElementById("startsleep").style.visibility = "visible";
 		document.getElementById("testMotion").style.display = "none";
@@ -373,36 +415,31 @@ epochs++;
 		totalHistory.push(0);
 	}
 	if (totalHistory.length > BUFFERSIZE) {
-	totalHistory.shift();
+		totalHistory.shift();
 	}
-	
-	//alert("started2");
 	motionSum=sumArray(totalHistory);
 	if (epochs % 5 == 0) {
-	motionHistory.push(diff);
-	summedMotion.push(motionSum);
-	timestamps.push(Date.now());
-	soundVolume.push(calVolume);
-	running.push(soundRunning);
+		motionHistory.push(diff);
+		summedMotion.push(motionSum);
+		timestamps.push(Date.now());
+		soundVolume.push(calVolume);
+		running.push(soundRunning);
 	if (soundRunning) {
 		totalStim=totalStim+1;
-		setCookie("totalStim",totalStim);
+		setCookie("totalStim",totalStim); // keep track of the total number of stimulations
 		}
-
 	}
-
 	if (epochs % 3600 == 0) { // mark the person as having gone to sleep (when they go back to the site it should be in wake mode)
 	setCookie("stage","wake",365*2);
-	
-	
 	}
-	
-	//
-	if (arousalMax > 0 & (DEBUG_MODE || (getPerc(motionSum,summedMotion) <= ONTHRESH && epochs >= STARTTIME && epochs <= STOPTIME && epochs > AROUSAL_OFFSET)))  {
-	//alert("starting sound");
-	rstim=TRAINSIZE;
-	startSound();
-	
+	if (arousalMax > 0 & 
+	(DEBUG_MODE || 
+	(getPerc(motionSum,summedMotion) <= ONTHRESH && 
+	epochs >= STARTTIME && 
+	epochs <= STOPTIME && // Ask about this (are 2.5 hours enough?)
+	epochs > AROUSAL_OFFSET)))  {
+		rstim=TRAINSIZE;
+		startSound();
 	}
 	else {
 	//rstim=rstim-1;
@@ -413,7 +450,6 @@ epochs++;
 	}
 	//alert(diff+","+totalHistory);
 	//alert(diff+","+motionSum+","+getPerc(motionSum,summedMotion));
-	
 }
 	
 function simulateMotion() { //simulate motion signals for desktop tes
@@ -432,7 +468,7 @@ formData.append("timestamps",timestamps);
 formData.append("running",running);
 formData.append("session",session);
 formData.append("soundVolume",soundVolume);
-formData.append("activeMode",condition);
+formData.append("controlMode",condition);
 formData.append("appVersion",appVersion);
 let request = new XMLHttpRequest();
 request.open("POST", "/sleepdata",true);
@@ -440,93 +476,106 @@ request.send(formData);
 }
 
 function wake() { //user is awake, redirect them to the wake page
-closeFullscreen();
-setCookie("stage","wake",365*2);
-document.getElementById("waitdt").style.visibility = "visible";
-
-
-setTimeout(function() {
-let formData = new FormData();
-formData.append("pid", pid);
-formData.append("motionHistory",motionHistory);
-formData.append("summedMotion",summedMotion);
-formData.append("timestamps",timestamps);
-formData.append("running",running);
-formData.append("session",session);
-formData.append("soundVolume",soundVolume);
-formData.append("activeMode",condition);
-formData.append("appVersion",appVersion);
-let request = new XMLHttpRequest();
-request.open("POST", "/sleepdata",false);
-request.send(formData);
-if (request.status == 200) {
-
-window.location.replace("/wake");
-}
-else {
-document.getElementById("waitdt").style.visibility = "hidden";
-alert("Unable to connect to the server; make sure you have a network connection!");
-}
-},500);
+	// Wait 3 hours
+	// 60 seconds * 60 minutes * 3 hours = 10800 seconds
+	if (!(!Date.now() > parseInt(localStorage.getItem("lastlaunch"))+(10800*1000) || 
+	(DEBUG_MODE && Date.now() > parseInt(localStorage.getItem("lastlaunch"))+(30*1000)))) {
+		alert("Please sleep for at least 3 hours before waking up");
+		console.log("Carnal por favor quierete un poco");
+		return;
+	}
+	closeFullscreen();
+	setCookie("stage","wake",365*2);
+	document.getElementById("waitdt").style.visibility = "visible";
+	setTimeout(function() {
+		let formData = new FormData();
+		formData.append("pid", pid);
+		formData.append("motionHistory",motionHistory);
+		formData.append("summedMotion",summedMotion);
+		formData.append("timestamps",timestamps);
+		formData.append("running",running);
+		formData.append("session",session);
+		formData.append("soundVolume",soundVolume);
+		formData.append("controlMode",condition);
+		formData.append("appVersion",appVersion);
+		let request = new XMLHttpRequest();
+		request.open("POST", "/sleepdata",false);
+		request.send(formData);
+		if (request.status == 200) {
+			setCookie("newDay", 0, 365*2);
+			if (parseInt(getCookie("session")) >= NumberOfSessions) {
+				window.location.replace("/survey"); // Qualtrics
+			}
+			else {
+				window.location.replace("/wake");
+			}
+		}
+		else {
+			document.getElementById("waitdt").style.visibility = "hidden";
+			alert("Unable to connect to the server; make sure you have a network connection!");
+		}
+	},500);
+	
 } //give a delay for the loading spiral to show up before we actually try to send data
 
 function getPerc(sample, buffer) {
-var subtotal=0.0;
-for (var i=0; i< buffer.length; i++) {
-if (buffer[i] <= sample) {
-subtotal=subtotal+1;
-}
-}
-//alert("samp:"+sample+",length:"+buffer+",avg"+subtotal/buffer.length)
-return subtotal/buffer.length;
+	/*
+		Calculates the percentage of array elements less than or equal to a given sample.
+	*/
+	var subtotal=0.0;
+	for (var i=0; i< buffer.length; i++) {
+		if (buffer[i] <= sample) {
+			subtotal=subtotal+1;
+		}
+	}
+	return subtotal/buffer.length;
 } 
 
 function sumArray(arr) {
 let sum = 0;
 
 for (let index = 0; index < arr.length; index++) {
-  sum += arr[index];
-
+	sum += arr[index];
 }
 return sum;
 }
 
 function startSound() {
-if (!soundRunning) {
-	soundRunning=true;
-	startStop.push(Date.now());
-	if (condition < 1) {
-	soundhandle=setInterval(function () {
-		playText(keyword, tmVolume);
-		tmVolume = tmVolume * 2
-	}, 1200)
+	
+	if (!soundRunning) {
+		soundRunning=true;
+		startStop.push(Date.now());
+		if (condition == 0) {
+			return; // don't play any sound for the control condition
+			// That beign said, we still want to record the data as we still want to know when the user is awake to compare it
+		}
+		soundhandle = setInterval(function () {
+			playText(keyword, tmVolume);
+			tmVolume = tmVolume * 2
+		}, 1200)
+		//}
 	}
 }
-}
-
 
 function stopSound() {
 	startStop.push(Date.now());
 	soundRunning=false;
-	if (condition < 1) {
+	//if (condition < 1) {
 	clearTimeout(soundhandle);
-	}
+	//}
 }
 
 function simulateArousal() {
 	arousal = true;
+	console.log("Simulating arousal");
 }
 
 setCookie("stage","sleep",365*2);
 setInterval(transmitData,600000);
 
-
-      
 </script>
 </head>
-<body style="font-size: 25px;
-		background-color: black;
-        color: white;">
+<body> 
 <div id="antiburnin"></div>
 <div id="soundcal"><div id="intro">
 Now we're ready to start the sleep mode. You should start this when you are ready to go to bed--if you're not yet you can come back by later visiting sleepplus.appspot.com <br><br> The first step is to calibrate the sound volume. Place the device on your mattress, in the same place it will be while you sleep. Lie down in your bed and then tap the "Calibrate sound" button.<br>

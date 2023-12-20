@@ -1,8 +1,8 @@
 import datetime
 
 from flask import Flask, render_template, request,redirect
-from google.cloud import datastore
-dc = datastore.Client()
+#from google.cloud import datastore
+#dc = datastore.Client()
 
 app = Flask(__name__)
 
@@ -31,8 +31,10 @@ def wake():
 def wakecomplete():
    return render_template('presession.html')
 
+
 @app.route('/sleepdata',methods=['POST'])
 def sleepdata():
+    pass
 
     datasize=len(request.form['timestamps'])
     if (datasize > 4):

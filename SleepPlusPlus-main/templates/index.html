@@ -17,19 +17,27 @@ function validateID() {
 var pid=document.getElementById("pid").value;
 var validated=false;
 try { //make sure the pid contains the correct verification code
-if (pid.charAt(1) == '9') {
-if (pid.charAt(3) == '2') {
-if (pid.charAt(5) == '3') {
-if (pid.charAt(7) == '6') {
-validated=true;
-}
-}
-}
-}
+        /*
+    if (pid.charAt(1) == '9') {
+    if (pid.charAt(3) == '2') {
+    if (pid.charAt(5) == '3') {
+    if (pid.charAt(7) == '6') {
+    validated=true;
+    }
+    }
+    }
+    }
+    regex instead of if statements
+    digit9digit2digit3digit6
+    // Those are the correct digits for the verification code
+    */
+    const regex = /^\d9\d2\d3\d6$/;
+    if (regex.test(pid)) {
+    validated=true;
+    }
 }
 catch (error) {
-
-
+alert("Participant ID not found. Make sure you have entered the ID number exactly as you received it, with no extra spaces or non-numeric characters.\nEntered ID: " + pid);
 }
 if (validated) {
 setCookie("pid",document.getElementById("pid").value,365*2);
@@ -37,7 +45,7 @@ setCookie("stage","sleep",365*2);
 location.reload();
 }
 else {
-alert("Participant ID not found. Make sure you have entered the ID number exactly as you received it, with no extra spaces or non-numeric characters.");
+alert("Participant ID not found. Make sure you have entered the ID number exactly as you received it, with no extra spaces or non-numeric characters.\nEntered ID: " + pid);
 }
 }
 </script>
@@ -46,9 +54,9 @@ alert("Participant ID not found. Make sure you have entered the ID number exactl
   <h1>Welcome!</h1><br>
   <h2>Please enter your participant ID below, then click continue</h2>
 <form>
-<input type="text" id="pid" style="height:10%;width:75%"></input>
+<input type="text" id="pid" style="width:75%" placeholder="Participant ID"> </input>
 <br>
-<button onclick="validateID()" style="height:10%;width:75%">Continue</button>
+<button onclick="validateID()" style="width:75%">Continue</button>
 </form>
 
 </body>
