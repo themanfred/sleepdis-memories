@@ -1,8 +1,8 @@
 import datetime
 
 from flask import Flask, render_template, request,redirect
-#from google.cloud import datastore
-#dc = datastore.Client()
+from google.cloud import datastore
+dc = datastore.Client()
 
 app = Flask(__name__)
 
