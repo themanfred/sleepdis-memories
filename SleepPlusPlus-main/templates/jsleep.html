@@ -18,6 +18,11 @@
 				value = decodeURIComponent(value);
 				vars[key] = value;
 			});
+
+		// TODO
+
+		// If we have cookis or url vars then good to go
+		// Then sign up page for experiment
 		
 		return vars;
 	}
@@ -35,7 +40,7 @@ for (var key of urlParams.keys()) {
 	console.log(key, urlParams.get(key));
 }
 var tmVolume = 0.016;
-var calVolume=1;
+var calVolume=0.2;
 var calTimer='';
 var totalRuns=1;
 var wakelock = new NoSleep();
@@ -79,6 +84,7 @@ var session=0;
 var condition=-1;
 var totalStim=0;
 var appVersion=5;
+var playedSound=false;
 motionAuthorized=false;
 motionFunctional=false;
 
@@ -195,7 +201,10 @@ function setConditions() { //set up the ondition alternation and session counter
 var cc=getCookie("condition");
 
 if (cc == '' || cc == null) { // The condition cookie doesn't exist, meaning this is the first time we have visited the page
-	let threshold = Math.random();
+	
+	// TODO Intead of random here, add it in the URL
+
+let threshold = Math.random();
 	if (threshold > 2/3) {
 	condition=0; // Control (placebo)
 	keyword = "";
@@ -277,7 +286,7 @@ if (totalRuns >= 1) { //the frist 10 second sare a trap to catch anyone who pres
 //alert(calVolume);
 playText("test", calVolume);
 calVolume=calVolume*2;
-alert("Should have played a sound");
+//alert("Should have played a sound");
 if (calVolume > 1) {
 alert("Could not calibrate the sound. Try turning up your device's volume, and make sure it is not muted.");
 clearInterval(calTimer);
@@ -287,7 +296,7 @@ location.reload();
 }
 totalRuns++;
 
-}, 8000);
+}, 10000);
 
 }
 
@@ -481,9 +490,9 @@ function wake() { //user is awake, redirect them to the wake page
 	if (!(!Date.now() > parseInt(localStorage.getItem("lastlaunch"))+(10800*1000) || 
 	(DEBUG_MODE && Date.now() > parseInt(localStorage.getItem("lastlaunch"))+(30*1000)))) {
 		alert("Please sleep for at least 3 hours before waking up");
-		console.log("Carnal por favor quierete un poco");
 		return;
 	}
+	// TODO dialog confirmation to wake up (are you sure you want to end the session?)
 	closeFullscreen();
 	setCookie("stage","wake",365*2);
 	document.getElementById("waitdt").style.visibility = "visible";
@@ -503,8 +512,13 @@ function wake() { //user is awake, redirect them to the wake page
 		request.send(formData);
 		if (request.status == 200) {
 			setCookie("newDay", 0, 365*2);
-			if (parseInt(getCookie("session")) >= NumberOfSessions) {
-				window.location.replace("/survey"); // Qualtrics
+			if (parseInt(getCookie("session")) >= NumberOfSessions) { // TODO hard condition ? -> already completed, redirect always to survey
+				if (playedSound){
+					window.location.replace("/survey"); // Qualtrics TODO
+				}
+				else{
+					// try again TODO
+				}
 			}
 			else {
 				window.location.replace("/wake");
@@ -550,6 +564,7 @@ function startSound() {
 			// That beign said, we still want to record the data as we still want to know when the user is awake to compare it
 		}
 		soundhandle = setInterval(function () {
+			playedSound=true;
 			playText(keyword, tmVolume);
 			tmVolume = tmVolume * 2
 		}, 1200)

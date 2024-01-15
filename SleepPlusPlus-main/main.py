@@ -1,15 +1,19 @@
 import datetime
 
 from flask import Flask, render_template, request,redirect
-from google.cloud import datastore
-dc = datastore.Client()
+#from google.cloud import datastore
+#dc = datastore.Client()
 
 app = Flask(__name__)
 
 # data=request.args.get('keyword')
 
+# TODO Redirect to survey if already completed experiment
+# @app.route('*')
+
 @app.route('/')
 def root():
+
     if "pid" in request.cookies and "stage" in request.cookies:
         if "sleep" in request.cookies.get("stage",default=''):
             return render_template('jsleep.html', data=request.args.get('keyword'))
@@ -51,15 +55,16 @@ def sleepdata():
             'appVersion': request.form['appVersion']
         })
 
-        dc.put(entity)
+        #dc.put(entity)
         #check to see if we have any prior sessions with this same id and session but less data, if so remove it
-        query = dc.query(kind='sleepdata')
+        #query = dc.query(kind='sleepdata')
         query = query.add_filter('pid', '=', request.form['pid'])
         query = query.add_filter('session', '=', request.form['session'])
         l = query.fetch()
         for item in l:
             if len(item['timestamps']) < datasize:
-                dc.delete(item.key)
+                #dc.delete(item.key)
+                pass
     
     data = {"status": "success"}
     return data, 200
