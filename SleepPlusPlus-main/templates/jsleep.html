@@ -19,21 +19,65 @@
 				vars[key] = value;
 			});
 
-		// TODO
-
-		// If we have cookis or url vars then good to go
-		// Then sign up page for experiment
+		
 		
 		return vars;
 	}
-	const urlParams = new URLSearchParams(window.location.search);
 
+const urlParams = new URLSearchParams(window.location.search);
+var condition=-1;
 var arousal=false;
 var arousalMax = 3;
 //const keyword = getUrlVars()["keyword"] || getCookie("keyword");
 const neutralKeyword = getUrlVars()["neutralKeyword"] || getCookie("neutralKeyword");
 const negativeKeyword = getUrlVars()["negativeKeyword"] || getCookie("negativeKeyword");
-var keyword = getCookie("keyword") || "test";
+
+// TODO Intead of random here, add it in the URL
+const setCondition = getUrlVars()["condition"] || getCookie("condition");
+
+// validate condition is either 0, 1 or 2
+if (setCondition != 0 && setCondition != 1 && setCondition != 2) {
+	alert("Invalid condition");
+	window.location.replace("/"); // Redirect to sign up
+}
+else {
+	condition = setCondition;
+	// Set cookie
+	setCookie("condition",condition,365*2);
+}
+
+// TODO
+
+// If we have cookies or url vars then good to go
+
+// If we don't have cookies or url vars then redirect to sign up page for experiment
+
+if (!(neutralKeyword && negativeKeyword)) {
+	alert("Invalid or missing keywords");
+	window.location.replace("/"); 
+}
+if (!condition) {
+	alert("Invalid or missing condition");
+	window.location.replace("/"); 
+}
+
+var keyword = getCookie("keyword") || neutralKeyword;
+
+switch (condition) {
+	case 0:
+		keyword = "";
+		break;
+	case 1:
+		keyword = neutralKeyword;
+		break;
+	case 2:
+		keyword = negativeKeyword;
+		break;
+	default:
+		keyword = "";
+		break;
+}
+
 console.log("Keyword: " + keyword);
 // Print all url variables
 for (var key of urlParams.keys()) {
@@ -81,7 +125,7 @@ var TRAINSIZE=4;
 var AROUSAL_THRESH=0.99;
 var rstim=-1;
 var session=0;
-var condition=-1;
+const randomizeCondition = false;
 var totalStim=0;
 var appVersion=5;
 var playedSound=false;
@@ -197,35 +241,46 @@ function playwa() {
 		
 	}
 
-function setConditions() { //set up the ondition alternation and session counter
-var cc=getCookie("condition");
-
-if (cc == '' || cc == null) { // The condition cookie doesn't exist, meaning this is the first time we have visited the page
-	
-	// TODO Intead of random here, add it in the URL
-
-let threshold = Math.random();
-	if (threshold > 2/3) {
-	condition=0; // Control (placebo)
-	keyword = "";
-	setCookie("keyword",keyword,365*2);
-	}
-	else if (threshold > 1/3) {
-	condition=1; // Neutral control memory
-	keyword = neutralKeyword;
-	setCookie("keyword",keyword,365*2);
-	setCookie("neutralKeyword",neutralKeyword,365*2);
+function setConditions() { //set up the condition alternation and session counter
+	if (!condition){
+		var cc=getCookie("condition");
 	}
 	else {
-	condition=2; // Negative control memory 
-	keyword = negativeKeyword;
-	setCookie("keyword",keyword,365*2);
-	setCookie("negativeKeyword",negativeKeyword,365*2);
+		var cc = condition;
 	}
-	setCookie("condition",condition,365*2);
-	setCookie("session",0,365*2);
-	session=0;
-	localStorage.setItem('lastlaunch', Date.now());
+
+	if (cc == '' || cc == null) { // The condition cookie doesn't exist, meaning this is the first time we have visited the page
+	
+		// TODO Intead of random here, add it in the URL
+
+		if (randomizeCondition) {
+			let threshold = Math.random();
+			if (threshold > 2/3) {
+			condition=0; // Control (placebo)
+			keyword = "";
+			setCookie("keyword",keyword,365*2);
+			}
+			else if (threshold > 1/3) {
+			condition=1; // Neutral control memory
+			keyword = neutralKeyword;
+			setCookie("keyword",keyword,365*2);
+			setCookie("neutralKeyword",neutralKeyword,365*2);
+			}
+			else {
+			condition=2; // Negative control memory 
+			keyword = negativeKeyword;
+			setCookie("keyword",keyword,365*2);
+			setCookie("negativeKeyword",negativeKeyword,365*2);
+			}
+			setCookie("condition",condition,365*2);
+		}
+		else {
+			condition=parseInt(cc);
+			setCookie("condition",condition,365*2);
+		}
+		setCookie("session",0,365*2);
+		session=0;
+		localStorage.setItem('lastlaunch', Date.now());
 }
 else {
 	// Wait 15 hours
@@ -493,8 +548,14 @@ function wake() { //user is awake, redirect them to the wake page
 		return;
 	}
 	// TODO dialog confirmation to wake up (are you sure you want to end the session?)
+
+	// Confirm dialog
+	if (!confirm("Are you sure you want to end the session?")) {
+		return;
+	}
+	
 	closeFullscreen();
-	setCookie("stage","wake",365*2);
+	//setCookie("stage","wake",365*2);
 	document.getElementById("waitdt").style.visibility = "visible";
 	setTimeout(function() {
 		let formData = new FormData();
@@ -514,10 +575,13 @@ function wake() { //user is awake, redirect them to the wake page
 			setCookie("newDay", 0, 365*2);
 			if (parseInt(getCookie("session")) >= NumberOfSessions) { // TODO hard condition ? -> already completed, redirect always to survey
 				if (playedSound){
-					window.location.replace("/survey"); // Qualtrics TODO
+					setCookie("stage","wake",365*2);
+					window.location.replace("/wake"); //  TODO
 				}
 				else{
 					// try again TODO
+					alert("Something went wrong, please try again");
+					setCookie("stage","sleep",365*2);
 				}
 			}
 			else {

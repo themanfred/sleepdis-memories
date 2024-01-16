@@ -1,15 +1,18 @@
 import datetime
 
 from flask import Flask, render_template, request,redirect
-#from google.cloud import datastore
-#dc = datastore.Client()
+from google.cloud import datastore
+dc = datastore.Client()
 
 app = Flask(__name__)
 
-# data=request.args.get('keyword')
+data=request.args.get('keyword')
 
 # TODO Redirect to survey if already completed experiment
 # @app.route('*')
+
+def qualtrics():
+    return redirect('''https://mit.co1.qualtrics.com/jfe/form/SV_blKzdkNW6nGHyjI?pid='''+request.cookies.get("pid",default='')+"&condition="+request.cookies.get("condition",default='')+"&session="+request.cookies.get("session",default='')+"&totalStim="+request.cookies.get("totalStim",default='')+"&keyword="+request.args.get('keyword')+"&appVersion=5")
 
 @app.route('/')
 def root():
@@ -18,7 +21,7 @@ def root():
         if "sleep" in request.cookies.get("stage",default=''):
             return render_template('jsleep.html', data=request.args.get('keyword'))
         elif "wake" in request.cookies.get("stage",default=''):
-            return redirect('''https://mit.co1.qualtrics.com/jfe/form/SV_blKzdkNW6nGHyjI?pid='''+request.cookies.get("pid",default='')+"&condition="+request.cookies.get("condition",default='')+"&session="+request.cookies.get("session",default='')+"&totalStim="+request.cookies.get("totalStim",default='')+"&appVersion=5")
+            return qualtrics()
         elif "presession" in request.cookies.get("stage",default=''):
             return render_template('presession.html')
     else: #no participant ID cookie exists, so make the person enter their user ID
@@ -26,19 +29,22 @@ def root():
 
 @app.route('/jsleep')
 def jsleep():
+    if "wake" in request.cookies.get("stage",default=''):
+        return qualtrics()
     return render_template('jsleep.html')
 
 @app.route('/wake')
 def wake():
-    return redirect('''https://mit.co1.qualtrics.com/jfe/form/SV_blKzdkNW6nGHyjI?pid='''+request.cookies.get("pid",default='')+"&condition="+request.cookies.get("condition",default='')+"&session="+request.cookies.get("session",default='')+"&totalStim="+request.cookies.get("totalStim",default='')+"&appVersion=5")
+    return qualtrics()
 @app.route('/wakecomplete')
 def wakecomplete():
-   return render_template('presession.html')
+    if "wake" in request.cookies.get("stage",default=''):
+        return qualtrics() 
+    return render_template('presession.html')
 
 
 @app.route('/sleepdata',methods=['POST'])
 def sleepdata():
-    pass
 
     datasize=len(request.form['timestamps'])
     if (datasize > 4):
