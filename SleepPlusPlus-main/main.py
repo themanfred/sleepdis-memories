@@ -1,12 +1,12 @@
 import datetime
 
 from flask import Flask, render_template, request,redirect
-from google.cloud import datastore
-dc = datastore.Client()
+#from google.cloud import datastore
+#dc = datastore.Client()
 
 app = Flask(__name__)
 
-data=request.args.get('keyword')
+#data=request.args.get('keyword')
 
 # TODO Redirect to survey if already completed experiment
 # @app.route('*')
@@ -17,7 +17,8 @@ def qualtrics():
 @app.route('/')
 def root():
 
-    if "pid" in request.cookies and "stage" in request.cookies:
+    conditions_to_assert = ["pid","negativeKeyword","condition","neutralKeyword"]
+    if all(condition in request.cookies for condition in conditions_to_assert):
         if "sleep" in request.cookies.get("stage",default=''):
             return render_template('jsleep.html', data=request.args.get('keyword'))
         elif "wake" in request.cookies.get("stage",default=''):
@@ -25,6 +26,11 @@ def root():
         elif "presession" in request.cookies.get("stage",default=''):
             return render_template('presession.html')
     else: #no participant ID cookie exists, so make the person enter their user ID
+        # Erase all cookies
+        for cookie in request.cookies:
+            response = app.make_response(redirect('/'))
+            response.set_cookie(cookie, '', expires=0)
+            return response
         return render_template('index.html')
 
 @app.route('/jsleep')
@@ -45,7 +51,7 @@ def wakecomplete():
 
 @app.route('/sleepdata',methods=['POST'])
 def sleepdata():
-
+    
     datasize=len(request.form['timestamps'])
     if (datasize > 4):
         entity = datastore.Entity(key=dc.key('sleepdata'),exclude_from_indexes=("motionHistory","summedMotion","timestamps","running","soundVolume"))

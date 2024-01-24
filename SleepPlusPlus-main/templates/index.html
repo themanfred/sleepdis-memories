@@ -15,7 +15,6 @@ function setCookie(cname, cvalue, exdays) {
 
 function validateID() {
 var pid=document.getElementById("pid").value;
-var validated=false;
 try { //make sure the pid contains the correct verification code
         /*
     if (pid.charAt(1) == '9') {
@@ -32,29 +31,75 @@ try { //make sure the pid contains the correct verification code
     // Those are the correct digits for the verification code
     */
     const regex = /^\d9\d2\d3\d6$/;
-    if (regex.test(pid)) {
-    validated=true;
+    if (!regex.test(pid)) {
+        alert("Participant ID not found. Make sure you have entered the ID number exactly as you received it, with no extra spaces or non-numeric characters.\nEntered ID: " + pid);
+        return;
+    }
+
+    // validate the negative keyword
+    var negativeKeyword=document.getElementById("negativeKeyword").value;
+    if (negativeKeyword.length < 1) {
+        alert("Please enter a negative keyword");
+        return;
+    }
+    // assert alphanumeric
+    const regex2 = /^[a-zA-Z0-9]+$/;
+    if (!regex2.test(negativeKeyword)) {
+        alert("Please enter a negative keyword with only alphanumeric characters");
+        return;
+    }
+    // validate the neutral keyword
+    var neutralKeyword=document.getElementById("neutralKeyword").value;
+    if (neutralKeyword.length < 1) {
+        alert("Please enter a neutral keyword");
+        return;
+    }
+    // assert alphanumeric
+    if (!regex2.test(neutralKeyword)) {
+        alert("Please enter a neutral keyword with only alphanumeric characters");
+        return;
+    }
+    // validate the condition
+    var condition=document.getElementById("condition").value;
+    if (condition.length < 1) {
+        alert("Please enter a condition");
+        return;
+    }
+    // assert is an integer
+    if (!Number.isInteger(parseInt(condition))) {
+        alert("Please enter an integer for the condition");
+        return;
+    }
+
+    setCookie("pid",document.getElementById("pid").value,365*2);
+    setCookie("stage","sleep",365*2);
+    setCookie("negativeKeyword",document.getElementById("negativeKeyword").value,365*2);
+    setCookie("neutralKeyword",document.getElementById("neutralKeyword").value,365*2);
+    setCookie("condition",document.getElementById("condition").value,365*2);
+    location.reload();
+    }
+        catch (error) {
+        alert("Participant ID not found. Make sure you have entered the ID number exactly as you received it, with no extra spaces or non-numeric characters.\nEntered ID: " + pid);
     }
 }
-catch (error) {
-alert("Participant ID not found. Make sure you have entered the ID number exactly as you received it, with no extra spaces or non-numeric characters.\nEntered ID: " + pid);
-}
-if (validated) {
-setCookie("pid",document.getElementById("pid").value,365*2);
-setCookie("stage","sleep",365*2);
-location.reload();
-}
-else {
-alert("Participant ID not found. Make sure you have entered the ID number exactly as you received it, with no extra spaces or non-numeric characters.\nEntered ID: " + pid);
-}
-}
+
 </script>
 </head>
 <body>
   <h1>Welcome!</h1><br>
   <h2>Please enter your participant ID below, then click continue</h2>
-<form>
+<form onsubmit="return false;">
 <input type="text" id="pid" style="width:75%" placeholder="Participant ID"> </input>
+<br>
+<input type="text" id="negativeKeyword" style="width:75%" placeholder="Negative Keyword"> </input>
+<br>
+<input type="text" id="neutralKeyword" style="width:75%" placeholder="Neutral Keyword"> </input>
+<br>
+<select id="condition" style="width:75%" placeholder="Condition">
+    <option value="0">Control</option>
+    <option value="1">Neutral</option>
+    <option value="2">Negative</option>
+</select>
 <br>
 <button onclick="validateID()" style="width:75%">Continue</button>
 </form>
