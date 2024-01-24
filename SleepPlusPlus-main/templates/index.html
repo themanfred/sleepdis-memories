@@ -42,8 +42,8 @@ try { //make sure the pid contains the correct verification code
         alert("Please enter a negative keyword");
         return;
     }
-    // assert alphanumeric
-    const regex2 = /^[a-zA-Z0-9]+$/;
+    // assert alphanumeric, ñ/Ñ included
+    const regex2 = /^[a-zA-Z0-9ñÑ]+$/;
     if (!regex2.test(negativeKeyword)) {
         alert("Please enter a negative keyword with only alphanumeric characters");
         return;

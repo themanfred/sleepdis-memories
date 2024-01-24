@@ -1,15 +1,12 @@
 import datetime
 
 from flask import Flask, render_template, request,redirect
-#from google.cloud import datastore
-#dc = datastore.Client()
+from google.cloud import datastore
+dc = datastore.Client()
 
 app = Flask(__name__)
 
 #data=request.args.get('keyword')
-
-# TODO Redirect to survey if already completed experiment
-# @app.route('*')
 
 def qualtrics():
     return redirect('''https://mit.co1.qualtrics.com/jfe/form/SV_blKzdkNW6nGHyjI?pid='''+request.cookies.get("pid",default='')+"&condition="+request.cookies.get("condition",default='')+"&session="+request.cookies.get("session",default='')+"&totalStim="+request.cookies.get("totalStim",default='')+"&keyword="+request.args.get('keyword')+"&appVersion=5")
@@ -67,9 +64,9 @@ def sleepdata():
             'appVersion': request.form['appVersion']
         })
 
-        #dc.put(entity)
+        dc.put(entity)
         #check to see if we have any prior sessions with this same id and session but less data, if so remove it
-        #query = dc.query(kind='sleepdata')
+        query = dc.query(kind='sleepdata')
         query = query.add_filter('pid', '=', request.form['pid'])
         query = query.add_filter('session', '=', request.form['session'])
         l = query.fetch()
