@@ -5,6 +5,30 @@
 <link rel="stylesheet" href="../static/style.css">
 <title>Sleep++</title>
 
+</head>
+<body> 
+<div id="antiburnin"></div>
+<div id="soundcal"><div id="intro">
+Now we're ready to start the sleep mode. You should start this when you are ready to go to bed--if you're not yet you can come back by later visiting sleepplus.appspot.com <br><br> The first step is to calibrate the sound volume. Place the device on your mattress, in the same place it will be while you sleep. Lie down in your bed and then tap the "Calibrate sound" button.<br>
+<button id="startcalibration" onclick="startcal()">Calibrate sound</button></div>
+
+<div id="soundReport" style="visibility:hidden"><br>Tap the button below as soon as you hear the device make a sound. Make sure the device is unmuted. It may take a minute before the sound is played.<br>
+<button id="report" onclick="reportSound()" style="height:10%;width:75%">I heard a sound</button><br><br>
+<button id="restart" onclick="location.reload();" style="height:10%;width:75%">Restart calibration</button></div></div>
+
+<div id="testMotion" style="visibility:hidden"><br>Now we need to activate your device's motion sensor. To start, click the button below. You might be prompted to allow access to the sensor.<br>
+<button id="motion" onclick="testMotion()" style="height:10%;width:75%">Activate motion sensor</button></div>
+<br>
+<div id="startsleep" style="visibility:hidden">All set! We're ready for you to go to sleep. Place the phone on the bed with the screen on (you can place it facedown). We also recommend keeping the phone connected to the charger.<br> When you wake up in the morning, tap the button below.
+<br><button id="wakebutton" onclick="wake()" style="height:10%;width:75%">I'm awake<br>
+</button>
+</div>
+<br>
+<div id="waitdt" style="visibility:hidden"><br> One minute...we're saving your sleep data.<br><img src="../static/spinner.gif" height="200" width="200"></div>
+<!--<button id="test" >Test sound</button>-->
+</body>
+
+
 <script src="../static/NoSleep.js"></script>
 <script>
 
@@ -193,181 +217,32 @@ document.getElementById("antiburnin").style.height = Math.random() * 15+"%";
 
 }
 
-function playText(text, vol) {
-	let utterance = new SpeechSynthesisUtterance(text);
-	utterance.volume = vol;
-	try {
-		speechSynthesis.speak(utterance);
-		if ('AudioContext' in window || 'webkitAudioContext' in window) {
+//var supportMsg = document.getElementById('msg');
 
-			//////////////////////////////////////////////////
-			// Here's the part for just playing an audio file.
-			//////////////////////////////////////////////////
-			var play = function play(audioBuffer) {
-			var source = context.createBufferSource();
-			source.buffer = audioBuffer;
-			source.connect(context.destination);
-			source.start();
-			};
-
-			var URL = 'https://s3-us-west-2.amazonaws.com/s.cdpn.io/123941/Yodel_Sound_Effect.mp3';
-			var AudioContext = window.AudioContext || window.webkitAudioContext;
-			var context = new AudioContext(); // Make it crossbrowser
-			var gainNode = context.createGain();
-			//gainNode.gain.value = 1; // set volume to 100%
-			//var playButton = document.querySelector('#play');
-			var yodelBuffer = void 0;
-
-			// The Promise-based syntax for BaseAudioContext.decodeAudioData() is not supported in Safari(Webkit).
-			window.fetch(URL)
-			.then(response => response.arrayBuffer())
-			.then(arrayBuffer => context.decodeAudioData(arrayBuffer,
-				audioBuffer => {
-					yodelBuffer = audioBuffer;
-				},
-				error =>
-					console.error(error)
-				))
-
-			play(yodelBuffer);
-			
-		}
-	}
-	catch(error) {
-	}
+if ('speechSynthesis' in window) {
+	//supportMsg.innerHTML = 'Your browser <strong>supports</strong> speech synthesis.';
+	//alert("Your browser supports speech synthesis.");
+} else {
+	//supportMsg.innerHTML = 'Sorry your browser <strong>does not support</strong> speech synthesis.<br>Try this in <a href="https://www.google.co.uk/intl/en/chrome/browser/canary.html">Chrome Canary</a>.';
+  	//supportMsg.classList.add('not-supported');
+	alert("Sorry your browser does not support speech synthesis. Try this in Chrome Canary.");
 }
 
-function playwa() {
-        var source = context.createBufferSource();
-        source.buffer = clickBuffer;
-		source.connect(gainNode);
-        gainNode.connect(context.destination);
-        source.start();
-      }
-
-	  var URL = '../static/pinknoiseburst.wav';
-      var AudioContext = window.AudioContext || window.webkitAudioContext;
-      var context = new AudioContext(); // Make it crossbrowser
-      var gainNode = context.createGain();
-      gainNode.gain.value = 1; // set volume to 100%
-      var clickBuffer = void 0;
-
-      // The Promise-based syntax for BaseAudioContext.decodeAudioData() is not supported in Safari(Webkit).
-	window.fetch(URL)
-		.then(response => response.arrayBuffer())
-		.then(arrayBuffer => context.decodeAudioData(arrayBuffer,
-		audioBuffer => {
-			clickBuffer = audioBuffer;
-			},
-			error =>
-			console.error(error)
-		))
 
 
-	// TODO CHECK UNLOCK FUNCTION
-
-	/*
-	function unlock() {
-		console.log("unlocking")
-		// create empty buffer and play it
-		var buffer = context.createBuffer(1, 1, 22050);
-		var source = context.createBufferSource();
-		source.buffer = buffer;
-		source.connect(context.destination);
-
-		// play the file. noteOn is the older version of start()
-		source.start ? source.start(0) : source.noteOn(0);
-
-		
-	}
-
-	function unlock() {
-	try {
-		console.log("unlocking");
-		// create empty buffer and play it
-		var buffer = context.createBuffer(1, 1, 22050);
-		var source = context.createBufferSource();
-		source.buffer = buffer;
-		source.connect(context.destination);
-
-		// play the file
-		if (source.start) {
-			source.start(0);
-		} else {
-			source.noteOn(0);
-		}
-
-		// Resume AudioContext for iOS
-		if (context.state === 'suspended') {
-			context.resume().then(() => {
-				console.log("AudioContext resumed successfully.");
-			}).catch((error) => {
-				alert("Error resuming AudioContext:", error);
-			});
-		}
-	}
-	catch (error) {
-		alert("Error unlocking audio context", error);
-	}
-}*/
-
-function unlock() {
-	console.log("unlocking")
-	// create empty buffer and play it
-	var buffer = context.createBuffer(1, 1, 22050);
-	var source = context.createBufferSource();
-	source.buffer = buffer;
-	source.connect(context.destination);
-
-	// play the file. noteOn is the older version of start()
-	source.start ? source.start(0) : source.noteOn(0);
-
-	// by checking the play state after some time, we know if we're really unlocked
-	setTimeout(function() {
-	  if((source.playbackState === source.PLAYING_STATE || source.playbackState === source.FINISHED_STATE)) {
-		// Hide the unmute button if the context is unlocked.
-		unmute.style.display = "none";
-	  }
-	}, 0);
-  }
+function playText(text, vol) {
 
 
+	var msg = new SpeechSynthesisUtterance();
+  
+	// Set the text.
+	msg.text = text;
+	
+	// Set the attributes.
+	msg.volume = parseFloat(vol);
+	window.speechSynthesis.speak(msg);
 
-
-/////////////////////////
-
-
-  //////////////////////////////////////////////////
-  // Here's the part for unlocking the audio context, probably for iOS only
-  //////////////////////////////////////////////////
-
-  // From https://paulbakaus.com/tutorials/html5/web-audio-on-ios/
-  // "The only way to unmute the Web Audio context is to call noteOn() right after a user interaction. This can be a click or any of the touch events (AFAIK – I only tested click and touchstart)."
-  /*
-  function unlock() {
-	console.log("unlocking")
-	// create empty buffer and play it
-	var buffer = context.createBuffer(1, 1, 22050);
-	var source = context.createBufferSource();
-	source.buffer = buffer;
-	source.connect(context.destination);
-
-	// play the file. noteOn is the older version of start()
-	source.start ? source.start(0) : source.noteOn(0);
-
-	// by checking the play state after some time, we know if we're really unlocked
-	setTimeout(function() {
-	  if((source.playbackState === source.PLAYING_STATE || source.playbackState === source.FINISHED_STATE)) {
-		// Hide the unmute button if the context is unlocked.
-		unmute.style.display = "none";
-	  }
-	}, 0);
-  }
-
-*/
-
-//////////////////////////////////////////////////
-
+}
 
 function setConditions() { //set up the condition alternation and session counter
 	if (!condition){
@@ -440,44 +315,66 @@ else {
 
 }
 
+var context = new AudioContext(); 
+function unlock() {
+		console.log("unlocking")
+		
+		// create empty buffer and play it
+		var buffer = context.createBuffer(1, 1, 22050);
+		var source = context.createBufferSource();
+		source.buffer = buffer;
+		source.connect(context.destination);
+
+		// play the file. noteOn is the older version of start()
+		source.start ? source.start(0) : source.noteOn(0);
+
+		
+	}
+
 setConditions();
 setCookie("totalStim",0);
 setCookie("appVersion",appVersion);
+
+
+var testButton = document.getElementById("startcalibration");
+testButton.addEventListener("click", function() {
+	playText("test", 0);
+});
+
+
 function startcal() {
-try { //error handling
-//acquire a wake lock to keep the screen on
-	wakelock.enable();
-unlock(); //unlock the audio context
-}
-catch (error) {
-alert("Your browser doesn't support some features used by this app, and it may not work properly. We recommend updating your browser or using a new version of Google Chrome");
-}
-/*
-beat = new Audio('/static/pinknoiseburst.wav');
+	try { //error handling
+	//acquire a wake lock to keep the screen on
+		wakelock.enable();
+		unlock(); //unlock the audio context
+	}
+	catch (error) {
+	alert("Your browser doesn't support some features used by this app, and it may not work properly. We recommend updating your browser or using a new version of Google Chrome");
+	alert(error);
+	}
 
-beat.volume=calVolume;*/
-gainNode.gain.value = calVolume;
-document.getElementById("startcalibration").disabled = true; 
-document.getElementById("soundReport").style.visibility = "visible";
-document.getElementById("soundReport").style.display = "initial";
-document.getElementById("intro").style.display = "none";
-calTimer = setInterval(function () {
+	document.getElementById("startcalibration").disabled = true; 
+	document.getElementById("soundReport").style.visibility = "visible";
+	document.getElementById("soundReport").style.display = "initial";
+	document.getElementById("intro").style.display = "none";
 
-if (totalRuns >= 1) { //the frist 10 second sare a trap to catch anyone who presses the button too soon
-//alert(calVolume);
-playText("test", calVolume);
-calVolume=calVolume*2;
-//alert("Should have played a sound");
-if (calVolume > 1) {
-alert("Could not calibrate the sound. Try turning up your device's volume, and make sure it is not muted.");
-clearInterval(calTimer);
-location.reload(); 
-}
+	calTimer = setInterval(function () {
 
-}
-totalRuns++;
+		if (totalRuns >= 1) { //the frist 10 second sare a trap to catch anyone who presses the button too soon
 
-}, 10000);
+		if (calVolume > 1) {
+		alert("Could not calibrate the sound. Try turning up your device's volume, and make sure it is not muted.");
+		clearInterval(calTimer);
+		location.reload(); 
+		}
+		
+		playText("test", calVolume);
+		calVolume=calVolume+0.2;
+
+		}
+		totalRuns++;
+
+	}, 10000);
 
 }
 
@@ -487,6 +384,8 @@ function setCookie(cname, cvalue, exdays) {
   let expires = "expires="+ d.toUTCString();
   document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
 }
+
+
 
 function getCookie(cname) {
 	let name = cname + "=";
@@ -777,28 +676,7 @@ function simulateArousal() {
 
 setCookie("stage","sleep",365*2);
 setInterval(transmitData,600000);
-
 </script>
-</head>
-<body> 
-<div id="antiburnin"></div>
-<div id="soundcal"><div id="intro">
-Now we're ready to start the sleep mode. You should start this when you are ready to go to bed--if you're not yet you can come back by later visiting sleepplus.appspot.com <br><br> The first step is to calibrate the sound volume. Place the device on your mattress, in the same place it will be while you sleep. Lie down in your bed and then tap the "Calibrate sound" button.<br>
-<button id="startcalibration" onclick="startcal()">Calibrate sound</button></div>
-<div id="soundReport" style="visibility:hidden"><br>Tap the button below as soon as you hear the device make a sound. Make sure the device is unmuted. It may take a minute before the sound is played.<br>
-<button id="report" onclick="reportSound()" style="height:10%;width:75%">I heard a sound</button><br><br>
-<button id="restart" onclick="location.reload();" style="height:10%;width:75%">Restart calibration</button></div></div>
 
-<div id="testMotion" style="visibility:hidden"><br>Now we need to activate your device's motion sensor. To start, click the button below. You might be prompted to allow access to the sensor.<br>
-<button id="motion" onclick="testMotion()" style="height:10%;width:75%">Activate motion sensor</button></div>
-<br>
-<div id="startsleep" style="visibility:hidden">All set! We're ready for you to go to sleep. Place the phone on the bed with the screen on (you can place it facedown). We also recommend keeping the phone connected to the charger.<br> When you wake up in the morning, tap the button below.
-<br><button id="wakebutton" onclick="wake()" style="height:10%;width:75%">I'm awake<br>
-</button>
-</div>
-<br>
-<div id="waitdt" style="visibility:hidden"><br> One minute...we're saving your sleep data.<br><img src="../static/spinner.gif" height="200" width="200"></div>
-
-</body>
 </html>
 
