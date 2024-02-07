@@ -72,8 +72,8 @@ def sleepdata():
         l = query.fetch()
         for item in l:
             if len(item['timestamps']) < datasize:
-                #dc.delete(item.key)
-                pass
+                dc.delete(item.key)
+                
     
     data = {"status": "success"}
     return data, 200

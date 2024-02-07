@@ -177,6 +177,8 @@ if (DEBUG_MODE) {
 	
 var elem = document.documentElement;
 
+setCookie('lastlaunch', Date.now(), 365*2);
+
 /* View in fullscreen */
 function openFullscreen() {
 try {
@@ -281,12 +283,13 @@ function setConditions() { //set up the condition alternation and session counte
 		}
 		setCookie("session",0,365*2);
 		session=0;
-		localStorage.setItem('lastlaunch', Date.now());
+		setCookie('lastlaunch', Date.now(), 365*2);
 }
 else {
 	// Wait 15 hours
 	// 60 seconds * 60 minutes * 15 hours = 54000 seconds
-	if (Date.now() > parseInt(localStorage.getItem("lastlaunch"))+(54000*1000) || (DEBUG_MODE && Date.now() > parseInt(localStorage.getItem("lastlaunch"))+(30*1000))) {
+	if (Date.now() > parseInt(getCookie("lastlaunch"))+(54000*1000) || 
+	(DEBUG_MODE && Date.now() > parseInt(getCookie("lastlaunch"))+(30*1000))) {
 
 	/*
 	condition=parseInt(cc)+1;
@@ -301,7 +304,7 @@ else {
 
 	session=parseInt(getCookie("session"))+1;
 	setCookie("session",session,365*2);
-	localStorage.setItem('lastlaunch', Date.now());
+	setCookie('lastlaunch', Date.now(), 365*2);
 	// Set a new cookie/variable to keep track if we are in a new day and therefore we can proceed with the next session
 	setCookie("newDay", 1, 365*2);
 	}
@@ -567,9 +570,12 @@ request.send(formData);
 function wake() { //user is awake, redirect them to the wake page
 	// Wait 3 hours
 	// 60 seconds * 60 minutes * 3 hours = 10800 seconds
-	if (!(Date.now() > (parseInt(localStorage.getItem("lastlaunch"))+(10*1000))) || 
-	(DEBUG_MODE && Date.now() > parseInt(localStorage.getItem("lastlaunch"))+(30*1000))) {
+	if (!(Date.now() > (parseInt(getCookie("lastlaunch"))+(10*1000))) || 
+	(DEBUG_MODE && Date.now() > parseInt(getCookie("lastlaunch"))+(30*1000))) {
 		alert("Please sleep for at least 3 hours before waking up");
+		alert("Last launch: " + getCookie("lastlaunch"));
+		alert("Current time: " + Date.now());
+		alert("Difference: " + (Date.now() - parseInt(getCookie("lastlaunch"))));
 		return;
 	}
 	// TODO dialog confirmation to wake up (are you sure you want to end the session?)
@@ -601,7 +607,7 @@ function wake() { //user is awake, redirect them to the wake page
 			if (parseInt(getCookie("session")) >= NumberOfSessions) { // TODO hard condition ? -> already completed, redirect always to survey
 				if (playedSound){
 					setCookie("stage","wake",365*2);
-					window.location.replace("/https://mit.co1.qualtrics.com/jfe/form/SV_bOgIpx4VGTUrvW6"+ "?pid=" + pid+"&session="+session+"&condition="+condition+"&appVersion="+appVersion+"&neutralKeyword="+neutralKeyword+"&negativeKeyword="+negativeKeyword);
+					window.location.replace("https://mit.co1.qualtrics.com/jfe/form/SV_bOgIpx4VGTUrvW6"+ "?pid=" + pid+"&session="+session+"&condition="+condition+"&appVersion="+appVersion+"&neutralKeyword="+neutralKeyword+"&negativeKeyword="+negativeKeyword);
 				}
 				else{
 					// try again TODO
@@ -610,10 +616,12 @@ function wake() { //user is awake, redirect them to the wake page
 				}
 			}
 			else {
-				window.location.replace("/https://mit.co1.qualtrics.com/jfe/form/SV_bOgIpx4VGTUrvW6"+ "?pid=" + pid+"&session="+session+"&condition="+condition+"&appVersion="+appVersion+"&neutralKeyword="+neutralKeyword+"&negativeKeyword="+negativeKeyword);
+				window.location.replace("https://mit.co1.qualtrics.com/jfe/form/SV_bOgIpx4VGTUrvW6"+ "?pid=" + pid+"&session="+session+"&condition="+condition+"&appVersion="+appVersion+"&neutralKeyword="+neutralKeyword+"&negativeKeyword="+negativeKeyword);
 			}
 		}
 		else {
+			alert("Error: " + request.status);
+
 			document.getElementById("waitdt").style.visibility = "hidden";
 			alert("Unable to connect to the server; make sure you have a network connection!");
 		}
