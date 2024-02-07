@@ -602,7 +602,7 @@ function wake() { //user is awake, redirect them to the wake page
 		let request = new XMLHttpRequest();
 		request.open("POST", "/sleepdata",false);
 		request.send(formData);
-		if (request.status == 200) {
+		if (true){//request.status == 200) {
 			setCookie("newDay", 0, 365*2);
 			if (parseInt(getCookie("session")) >= NumberOfSessions) { // TODO hard condition ? -> already completed, redirect always to survey
 				if (playedSound){
