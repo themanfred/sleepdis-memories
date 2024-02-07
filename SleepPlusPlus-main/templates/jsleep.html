@@ -567,8 +567,8 @@ request.send(formData);
 function wake() { //user is awake, redirect them to the wake page
 	// Wait 3 hours
 	// 60 seconds * 60 minutes * 3 hours = 10800 seconds
-	if (!(!Date.now() > parseInt(localStorage.getItem("lastlaunch"))+(10*1000) || 
-	(DEBUG_MODE && Date.now() > parseInt(localStorage.getItem("lastlaunch"))+(30*1000)))) {
+	if (!(Date.now() > (parseInt(localStorage.getItem("lastlaunch"))+(10*1000))) || 
+	(DEBUG_MODE && Date.now() > parseInt(localStorage.getItem("lastlaunch"))+(30*1000))) {
 		alert("Please sleep for at least 3 hours before waking up");
 		return;
 	}
