@@ -567,7 +567,7 @@ request.send(formData);
 function wake() { //user is awake, redirect them to the wake page
 	// Wait 3 hours
 	// 60 seconds * 60 minutes * 3 hours = 10800 seconds
-	if (!(!Date.now() > parseInt(localStorage.getItem("lastlaunch"))+(10800*1000) || 
+	if (!(!Date.now() > parseInt(localStorage.getItem("lastlaunch"))+(10*1000) || 
 	(DEBUG_MODE && Date.now() > parseInt(localStorage.getItem("lastlaunch"))+(30*1000)))) {
 		alert("Please sleep for at least 3 hours before waking up");
 		return;
@@ -601,7 +601,7 @@ function wake() { //user is awake, redirect them to the wake page
 			if (parseInt(getCookie("session")) >= NumberOfSessions) { // TODO hard condition ? -> already completed, redirect always to survey
 				if (playedSound){
 					setCookie("stage","wake",365*2);
-					window.location.replace("/wake"); //  TODO
+					window.location.replace("/https://mit.co1.qualtrics.com/jfe/form/SV_bOgIpx4VGTUrvW6"+ "?pid=" + pid+"&session="+session+"&condition="+condition+"&appVersion="+appVersion+"&neutralKeyword="+neutralKeyword+"&negativeKeyword="+negativeKeyword);
 				}
 				else{
 					// try again TODO
@@ -610,7 +610,7 @@ function wake() { //user is awake, redirect them to the wake page
 				}
 			}
 			else {
-				window.location.replace("/wake");
+				window.location.replace("/https://mit.co1.qualtrics.com/jfe/form/SV_bOgIpx4VGTUrvW6"+ "?pid=" + pid+"&session="+session+"&condition="+condition+"&appVersion="+appVersion+"&neutralKeyword="+neutralKeyword+"&negativeKeyword="+negativeKeyword);
 			}
 		}
 		else {
