@@ -177,7 +177,7 @@ if (DEBUG_MODE) {
 	
 var elem = document.documentElement;
 
-setCookie('lastlaunch', Date.now(), 365*2);
+
 
 /* View in fullscreen */
 function openFullscreen() {
@@ -382,10 +382,10 @@ function startcal() {
 }
 
 function setCookie(cname, cvalue, exdays) {
-  let d = new Date();
-  d.setTime(d.getTime() + (exdays*24*60*60*1000));
-  let expires = "expires="+ d.toUTCString();
-  document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+	let d = new Date();
+	d.setTime(d.getTime() + (exdays*24*60*60*1000));
+	let expires = "expires="+ d.toUTCString();
+	document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
 }
 
 
@@ -415,7 +415,7 @@ if (totalRuns < 1) {
 alert("Wait until you hear the phone make a sound to press the button");
 }
 else {
-
+setCookie('lastlaunch', Date.now(), 365*2);
 clearTimeout(calTimer);
 document.getElementById("testMotion").style.visibility = "visible";
 document.getElementById("soundcal").style.display = "none";
@@ -570,7 +570,7 @@ request.send(formData);
 function wake() { //user is awake, redirect them to the wake page
 	// Wait 3 hours
 	// 60 seconds * 60 minutes * 3 hours = 10800 seconds
-	if (!(Date.now() > (parseInt(getCookie("lastlaunch"))+(10*1000))) || 
+	if (!(Date.now() > (parseInt(getCookie("lastlaunch"))+(10800*1000))) || 
 	(DEBUG_MODE && Date.now() > parseInt(getCookie("lastlaunch"))+(30*1000))) {
 		alert("Please sleep for at least 3 hours before waking up");
 		alert("Last launch: " + getCookie("lastlaunch"));
@@ -593,6 +593,7 @@ function wake() { //user is awake, redirect them to the wake page
 		formData.append("pid", pid);
 		formData.append("motionHistory",motionHistory);
 		formData.append("summedMotion",summedMotion);
+		formData.append("activeMode", "wake");
 		formData.append("timestamps",timestamps);
 		formData.append("running",running);
 		formData.append("session",session);
@@ -602,7 +603,7 @@ function wake() { //user is awake, redirect them to the wake page
 		let request = new XMLHttpRequest();
 		request.open("POST", "/sleepdata",false);
 		request.send(formData);
-		if (true){//request.status == 200) {
+		if (request.status == 200) {
 			setCookie("newDay", 0, 365*2);
 			if (parseInt(getCookie("session")) >= NumberOfSessions) { // TODO hard condition ? -> already completed, redirect always to survey
 				if (playedSound){
@@ -616,12 +617,12 @@ function wake() { //user is awake, redirect them to the wake page
 				}
 			}
 			else {
+				setCookie("stage","wake",365*2);
 				window.location.replace("https://mit.co1.qualtrics.com/jfe/form/SV_bOgIpx4VGTUrvW6"+ "?pid=" + pid+"&session="+session+"&condition="+condition+"&appVersion="+appVersion+"&neutralKeyword="+neutralKeyword+"&negativeKeyword="+negativeKeyword);
 			}
 		}
 		else {
 			alert("Error: " + request.status);
-
 			document.getElementById("waitdt").style.visibility = "hidden";
 			alert("Unable to connect to the server; make sure you have a network connection!");
 		}

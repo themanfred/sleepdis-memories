@@ -66,13 +66,13 @@ def sleepdata():
 
         dc.put(entity)
         #check to see if we have any prior sessions with this same id and session but less data, if so remove it
-        query = dc.query(kind='sleepdata')
-        query = query.add_filter('pid', '=', request.form['pid'])
-        query = query.add_filter('session', '=', request.form['session'])
-        l = query.fetch()
-        for item in l:
-            if len(item['timestamps']) < datasize:
-                dc.delete(item.key)
+        #query = dc.query(kind='sleepdata')
+        #query = query.add_filter('pid', '=', request.form['pid'])
+        #query = query.add_filter('session', '=', request.form['session'])
+        #l = query.fetch()
+        #for item in l:
+        #    if len(item['timestamps']) < datasize:
+        #        dc.delete(item.key)
                 
     
     data = {"status": "success"}
