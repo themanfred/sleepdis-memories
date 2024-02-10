@@ -110,7 +110,7 @@ for (var key of urlParams.keys()) {
 	console.log(key, urlParams.get(key));
 }
 var tmVolume = 0.016;
-var calVolume=0.2;
+var calVolume=0.02;
 var calTimer='';
 var totalRuns=1;
 var wakelock = new NoSleep();
@@ -372,7 +372,7 @@ function startcal() {
 		}
 		
 		playText("test", calVolume);
-		calVolume=calVolume+0.2;
+		calVolume=calVolume*2;
 
 		}
 		totalRuns++;
