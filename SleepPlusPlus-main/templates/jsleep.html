@@ -601,7 +601,7 @@ function wake() { //user is awake, redirect them to the wake page
 		if (request.status == 200) {
 			setCookie("newDay", 0, 365*2);
 			if (parseInt(getCookie("session")) >= NumberOfSessions) { // TODO hard condition ? -> already completed, redirect always to survey
-				if (playedSound){
+				if (playedSound || true){
 					setCookie("stage","wake",365*2);
 					window.location.replace("https://mit.co1.qualtrics.com/jfe/form/SV_bOgIpx4VGTUrvW6"+ "?pid=" + pid+"&session="+session+"&condition="+condition+"&appVersion="+appVersion+"&neutralKeyword="+neutralKeyword+"&negativeKeyword="+negativeKeyword);
 				}
