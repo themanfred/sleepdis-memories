@@ -546,26 +546,67 @@ yacc=Math.random();
 zacc=Math.random();
 }
 function transmitData() {
-let formData = new FormData();
+    let formData = new FormData();
 
-formData.append("pid", pid);
-formData.append("motionHistory",motionHistory);
-formData.append("summedMotion",summedMotion);
-formData.append("timestamps",timestamps);
-formData.append("running",running);
-formData.append("session",session);
-formData.append("soundVolume",soundVolume);
-formData.append("controlMode",condition);
-formData.append("appVersion",appVersion);
-let request = new XMLHttpRequest();
-request.open("POST", "/sleepdata",true);
-request.send(formData);
+    formData.append("pid", pid);
+    formData.append("motionHistory", motionHistory);
+    formData.append("summedMotion", summedMotion);
+    formData.append("activeMode", "asleep");
+    formData.append("timestamps", timestamps);
+    formData.append("running", running);
+    formData.append("session", session);
+    formData.append("soundVolume", soundVolume);
+    formData.append("controlMode", condition);
+    formData.append("appVersion", appVersion);
+
+    let request = new XMLHttpRequest();
+    request.open("POST", "/sleepdata", true);
+
+    // Set the timeout duration (e.g., 10000 milliseconds = 10 seconds)
+    request.timeout = 10000; // Adjust this value based on your requirements
+
+    // Define what happens in case of a timeout
+    request.ontimeout = function () {
+        alert('Upload timed out. Please try again.'); // Display an alert message
+        // If necessary, implement additional logic to handle the timeout, such as retrying the request or ending the application.
+        // For example, if you are running this in a browser, you could reload or close the window (not recommended for user experience):
+        // window.location.reload(); or window.close();
+		window.location.reload();
+    };
+
+	/*
+    // Optional: Define what happens when the request is successfully completed
+    request.onload = function () {
+        if (request.status >= 200 && request.status < 300) {
+            // Handle success scenario
+            console.log('Data uploaded successfully.');
+        } else {
+            // Handle failure scenario
+            console.log('Failed to upload data.');
+        }
+    };*/
+
+    // Optional: Define what happens in case of an error (e.g., network issues)
+    request.onerror = function () {
+        alert('Upload failed due to a network error.');
+        // Implement logic to handle network errors
+		window.location.reload();
+    };
+
+    request.send(formData);
+
+	// Empty the arrays
+	motionHistory = [];
+	summedMotion = [];
+	timestamps = [];
+	running = [];
+	soundVolume = [];
 }
 
-function wake() { //user is awake, redirect them to the wake page
+function wake(force=false) { //user is awake, redirect them to the wake page
 	// Wait 3 hours
 	// 60 seconds * 60 minutes * 3 hours = 10800 seconds
-	if (!(Date.now() > (parseInt(getCookie("lastlaunch"))+(10800*1000))) || 
+	if (force = false && !(Date.now() > (parseInt(getCookie("lastlaunch"))+(10800*1000))) || 
 	(DEBUG_MODE && Date.now() > parseInt(getCookie("lastlaunch"))+(30*1000))) {
 		alert("Please sleep for at least 3 hours before waking up");
 		alert("Last launch: " + getCookie("lastlaunch"));
@@ -679,7 +720,16 @@ function simulateArousal() {
 }
 
 setCookie("stage","sleep",365*2);
-setInterval(transmitData,600000);
+const n = 5; // minutes
+setInterval(transmitData,n*60*1000); // Every n minutes
+
+document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'hidden') {
+        alert('You have left the page, hence the experiment is ending.');
+		wake(force=true);
+    }
+});
+
 </script>
 
 </html>
