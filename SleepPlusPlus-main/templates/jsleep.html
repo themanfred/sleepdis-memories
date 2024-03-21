@@ -51,7 +51,7 @@ Now we're ready to start the sleep mode. You should start this when you are read
 const urlParams = new URLSearchParams(window.location.search);
 var condition=-1;
 var arousal=false;
-var arousalMax = 3;
+var arousalMax = 6;
 //const keyword = getUrlVars()["keyword"] || getCookie("keyword");
 const neutralKeyword = getUrlVars()["neutralKeyword"] || getCookie("neutralKeyword");
 const negativeKeyword = getUrlVars()["negativeKeyword"] || getCookie("negativeKeyword");
@@ -110,7 +110,7 @@ for (var key of urlParams.keys()) {
 	console.log(key, urlParams.get(key));
 }
 var tmVolume = 0.016;
-var calVolume=0.2;
+var calVolume=0.02;
 var calTimer='';
 var totalRuns=1;
 var wakelock = new NoSleep();
@@ -146,7 +146,7 @@ var DEBUG_MODE=false;
 var STARTTIME=3600;
 var STOPTIME=12600;// 3.5 hours
 var AROUSAL_OFFSET=0;
-var ONTHRESH=0.4;
+var ONTHRESH=0.2;
 var TRAINSIZE=4;
 var AROUSAL_THRESH=0.99;
 var rstim=-1;
@@ -372,7 +372,7 @@ function startcal() {
 		}
 		
 		playText("test", calVolume);
-		calVolume=calVolume+0.2;
+		calVolume=calVolume*2;
 
 		}
 		totalRuns++;
@@ -491,12 +491,9 @@ function tm() { // TrackMotion
 	stopSound();
 	arousalMax-=1
 	AROUSAL_OFFSET=epochs+300;
-	tmVolume=0.016;
 	}
 
-	if (arousal) { //debug purposes
-		arousal = false;
-	}
+
 	}
 
 	//measure whether any significant motion occurred
@@ -524,19 +521,17 @@ function tm() { // TrackMotion
 	if (epochs % 3600 == 0) { // mark the person as having gone to sleep (when they go back to the site it should be in wake mode)
 	setCookie("stage","wake",365*2);
 	}
-	if (arousalMax > 0 & 
-	(DEBUG_MODE || 
-	(getPerc(motionSum,summedMotion) <= ONTHRESH && 
+	if (arousalMax > 0 & (getPerc(motionSum,summedMotion) <= ONTHRESH && 
 	epochs >= STARTTIME && 
 	epochs <= STOPTIME && // Ask about this (are 2.5 hours enough?)
-	epochs > AROUSAL_OFFSET)))  {
+	epochs > AROUSAL_OFFSET))  {
 		rstim=TRAINSIZE;
 		startSound();
 	}
 	else {
 	//rstim=rstim-1;
 	//if (rstim < 0) {
-	//stopSound();
+	stopSound();
 	//alert("stopping sound");
 	//}
 	}
@@ -647,7 +642,7 @@ function wake(force=false) { //user is awake, redirect them to the wake page
 		if (request.status == 200) {
 			setCookie("newDay", 0, 365*2);
 			if (parseInt(getCookie("session")) >= NumberOfSessions) { // TODO hard condition ? -> already completed, redirect always to survey
-				if (playedSound){
+				if (playedSound || true){
 					setCookie("stage","wake",365*2);
 					window.location.replace("https://mit.co1.qualtrics.com/jfe/form/SV_bOgIpx4VGTUrvW6"+ "?pid=" + pid+"&session="+session+"&condition="+condition+"&appVersion="+appVersion+"&neutralKeyword="+neutralKeyword+"&negativeKeyword="+negativeKeyword);
 				}
@@ -706,7 +701,7 @@ function startSound() {
 			playedSound=true;
 			playText(keyword, tmVolume);
 			tmVolume = tmVolume * 2
-		}, 1200)
+		}, 10000)
 		//}
 	}
 }
